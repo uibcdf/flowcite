@@ -1,4 +1,4 @@
-# Behavior expected
+## Behavior expected
 
 ```python
 import flowcite
@@ -25,6 +25,22 @@ except ImportError:
         def deco(fn):
             return fn
         return deco
+    def track_item(*args, **kwargs):
+        pass
+```
+
+## How to use it
+
+```python
+try:
+    from flowcite import scoped_usage, track_item
+except ImportError:
+    # graceful fallbacks
+    def scoped_usage(target=None):
+        def deco(fn):
+            return fn
+        return deco
+
     def track_item(*args, **kwargs):
         pass
 ```
