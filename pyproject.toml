@@ -1,0 +1,23 @@
+[project]
+name = "flowcite"
+version = "0.0.1"
+description = "FlowCite — trace what you used, cite what matters."
+readme = "README.md"
+authors = [
+  { name = "UIBCDF Development Team" }
+]
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/uibcdf/flowcite"
+Repository = "https://github.com/uibcdf/flowcite"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["flowcite"]
+
