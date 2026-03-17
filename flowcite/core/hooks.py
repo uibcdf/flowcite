@@ -1,10 +1,12 @@
 from __future__ import annotations
 import atexit
 import sys
+from pathlib import Path
 from importlib.abc import MetaPathFinder
 from importlib.util import find_spec
+from importlib import metadata
 from .collector import get_used_items, track_item
-from .registry import Registry
+from .registry import Registry, register_item
 
 _REMINDER_ENABLED = False
 
@@ -41,15 +43,73 @@ class InjectionsFinder(MetaPathFinder):
         self._triggered = set()
 
     def find_spec(self, fullname, path, target=None):
-        # We don't want to block anything, just trigger if it matches an injection
+        if fullname.startswith("flowcite"):
+            return None
+
+        # 0. Standard Injections
+        from .standard_injections import STANDARD_INJECTIONS
+        if fullname in STANDARD_INJECTIONS and fullname not in self._triggered:
+            self._triggered.add(fullname)
+            for item_data in STANDARD_INJECTIONS[fullname]:
+                register_item(**item_data)
+                track_item(item_data['id'], used_by=fullname)
+
+        # 1. Manual Injections
         if fullname in Registry.injections and fullname not in self._triggered:
             self._triggered.add(fullname)
             item_ids = Registry.injections.get(fullname, [])
             for item_id in item_ids:
                 track_item(item_id, used_by=fullname)
         
+        # 2. Auto-discovery (only for top-level packages)
+        elif "." not in fullname and fullname not in self._triggered:
+            self._triggered.add(fullname)
+            self._discover_and_register(fullname)
+        
         # We return None so the normal import process continues
         return None
+
+    def _discover_and_register(self, fullname: str):
+        # Try to find package path
+        spec = find_spec(fullname)
+        if not spec or not spec.origin:
+            return
+
+        pkg_path = Path(spec.origin).parent
+        
+        # Look for CITATION.cff
+        from .cff import find_and_parse_cff
+        cff_data = find_and_parse_cff(pkg_path)
+        
+        if cff_data:
+            item_id = f"discovered:{fullname}"
+            register_item(
+                id=item_id,
+                type="software",
+                title=cff_data.get('title', fullname),
+                authors=cff_data.get('authors', []),
+                doi=cff_data.get('doi'),
+                url=cff_data.get('url'),
+                note=cff_data.get('message')
+            )
+            track_item(item_id, used_by=fullname)
+        else:
+            # Fallback: metadata discovery
+            try:
+                meta = metadata.metadata(fullname)
+                if meta:
+                    item_id = f"metadata:{fullname}"
+                    register_item(
+                        id=item_id,
+                        type="software",
+                        title=meta.get('Name', fullname),
+                        authors=[meta.get('Author')] if meta.get('Author') else [],
+                        url=meta.get('Home-page') or meta.get('Project-URL'),
+                        version=meta.get('Version')
+                    )
+                    track_item(item_id, used_by=fullname)
+            except metadata.PackageNotFoundError:
+                pass
 
 _IMPORT_HOOKS_ENABLED = False
 

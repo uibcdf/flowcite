@@ -5,7 +5,7 @@
 *   [x] Implement the documented and tested 'Optional Dependency' pattern.
 *   [x] Add the Context Manager for granular tracking.
 
-## Phase 2: User Experience (0.2.0) - [IN PROGRESS]
+## Phase 2: User Experience (0.2.0) - [DONE]
 *   [x] Launch `flowcite.contrib.jupyter` for rich visualization.
 *   [x] Improve the Markdown format to include clickable DOI links.
 *   [ ] Define the official JSON schema.
