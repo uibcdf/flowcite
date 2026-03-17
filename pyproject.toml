@@ -1,6 +1,6 @@
 [project]
 name = "flowcite"
-version = "0.2.0"
+version = "0.3.0"
 description = "FlowCite — trace what you used, cite what matters."
 readme = "README.md"
 authors = [
@@ -13,6 +13,9 @@ dependencies = []
 [project.urls]
 Homepage = "https://github.com/uibcdf/flowcite"
 Repository = "https://github.com/uibcdf/flowcite"
+
+[project.scripts]
+flowcite = "flowcite.cli:main"
 
 [build-system]
 requires = ["setuptools>=61.0"]

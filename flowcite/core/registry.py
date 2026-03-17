@@ -67,15 +67,6 @@ class Registry:
         
         content = path.read_text()
         
-        # Regex to find entries: @type{key, ...}
-        # This matches @type{key, and then everything until the matching closing brace
-        # We use a simplified version that finds entry blocks
-        entry_pattern = re.compile(r'@(\w+)\s*\{\s*([^,]+)\s*,\s*(.*?)\n\s*\}', re.DOTALL)
-        
-        # For more complex entries with nested braces, we might need a more robust loop
-        # but for common scientific bibtex, this regex is a good start.
-        # Let's use a slightly more manual approach to be safe with nested braces.
-        
         pos = 0
         while True:
             match = re.search(r'@(\w+)\s*\{', content[pos:])
@@ -102,58 +93,108 @@ class Registry:
             pos = end_pos
 
     @classmethod
+    def _get_cache_dir(cls) -> Path:
+        cache_dir = Path.home() / ".cache" / "flowcite"
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        return cache_dir
+
+    @classmethod
     def enrich_item(cls, item_id: str) -> None:
         """
         Fetch missing metadata for an item using its DOI from Crossref API.
+        Uses a local cache to avoid redundant network calls.
         """
         item = cls.items.get(item_id)
         if not item or "doi" not in item:
             return
 
         doi = item["doi"]
-        try:
-            url = f"https://api.crossref.org/works/{doi}"
-            # Identifying ourselves is good practice for Crossref API
-            headers = {"User-Agent": "FlowCite/0.1.0 (https://github.com/uibcdf/flowcite)"}
-            req = urllib.request.Request(url, headers=headers)
-            with urllib.request.urlopen(req, timeout=5) as response:
-                data = json.loads(response.read().decode())["message"]
-                
-                # Update title if missing
-                if "title" not in item or not item["title"]:
-                    item["title"] = data.get("title", [item_id])[0]
-                
-                # Update authors if missing
-                if "authors" not in item or not item["authors"]:
-                    authors = []
-                    for auth in data.get("author", []):
-                        given = auth.get("given", "")
-                        family = auth.get("family", "")
-                        authors.append(f"{family}, {given}".strip(", "))
-                    if authors:
-                        item["authors"] = authors
-                
-                # Update year if missing
-                if "year" not in item or not item["year"]:
-                    issued = data.get("issued", {}).get("date-parts", [[None]])[0][0]
-                    if issued:
-                        item["year"] = int(issued)
-                
-                # Update journal if missing
-                if "journal" not in item or not item["journal"]:
-                    container = data.get("container-title", [])
-                    if container:
-                        item["journal"] = container[0]
+        safe_doi = doi.replace("/", "_")
+        cache_file = cls._get_cache_dir() / f"{safe_doi}.json"
+        
+        data = None
+        
+        # 1. Try cache
+        if cache_file.exists():
+            try:
+                data = json.loads(cache_file.read_text())
+            except Exception:
+                pass
+        
+        # 2. Try network
+        if not data:
+            try:
+                url = f"https://api.crossref.org/works/{doi}"
+                headers = {"User-Agent": "FlowCite/0.2.0 (https://github.com/uibcdf/flowcite)"}
+                req = urllib.request.Request(url, headers=headers)
+                with urllib.request.urlopen(req, timeout=5) as response:
+                    data = json.loads(response.read().decode())["message"]
+                    # Save to cache
+                    cache_file.write_text(json.dumps(data))
+            except Exception:
+                pass
 
-        except Exception as e:
-            # We fail silently as enrichment is an optional enhancement
-            pass
+        # 3. Apply metadata
+        if data:
+            # Update title if missing
+            if "title" not in item or not item["title"]:
+                item["title"] = data.get("title", [item_id])[0]
+            
+            # Update authors if missing
+            if "authors" not in item or not item["authors"]:
+                authors = []
+                for auth in data.get("author", []):
+                    given = auth.get("given", "")
+                    family = auth.get("family", "")
+                    authors.append(f"{family}, {given}".strip(", "))
+                if authors:
+                    item["authors"] = authors
+            
+            # Update year if missing
+            if "year" not in item or not item["year"]:
+                issued = data.get("issued", {}).get("date-parts", [[None]])[0][0]
+                if issued:
+                    item["year"] = int(issued)
+            
+            # Update journal if missing
+            if "journal" not in item or not item["journal"]:
+                container = data.get("container-title", [])
+                if container:
+                    item["journal"] = container[0]
+
 
     @classmethod
     def enrich_all(cls) -> None:
         """Enrich all registered items that have a DOI."""
         for item_id in list(cls.items.keys()):
             cls.enrich_item(item_id)
+
+    @classmethod
+    def load_plugins(cls) -> None:
+        """
+        Discover and load citation plugins using Python entry points.
+        External packages can register citations by adding to their pyproject.toml:
+        [project.entry-points."flowcite.citations"]
+        anything = "my_package.citations:register"
+        """
+        from importlib import metadata
+        eps = metadata.entry_points()
+        
+        # In Python 3.10+, entry_points() returns a SelectableGroups object
+        if hasattr(eps, 'select'):
+            plugins = eps.select(group='flowcite.citations')
+        else:
+            # Fallback for older versions if necessary
+            plugins = eps.get('flowcite.citations', [])
+
+        for entry_point in plugins:
+            try:
+                register_func = entry_point.load()
+                # The function is expected to call flowcite.register_item or flowcite.bind
+                register_func()
+            except Exception:
+                # Fail silently to avoid breaking the host application
+                pass
 
     @classmethod
     def _parse_entry(cls, entry_type: str, body: str) -> None:
@@ -183,11 +224,7 @@ class Registry:
         }
         
         # Parse fields
-        # Regex for key = {value} or key = "value" or key = value
         field_pattern = re.compile(r'(\w+)\s*=\s*(\{.*?\}|".*?"|[^,]+)', re.DOTALL)
-        
-        # We need to handle nested braces in values too if we want to be 100% robust,
-        # but for now let's use a simpler field extraction.
         
         for field_match in field_pattern.finditer(fields_str):
             key = field_match.group(1).lower()
@@ -211,7 +248,7 @@ class Registry:
                 # Direct mapping or standard keys
                 fc_key_map = {
                     "journaltitle": "journal",
-                    "date": "year" # often contains more, but year is common
+                    "date": "year"
                 }
                 final_key = fc_key_map.get(key, key)
                 item[final_key] = value
@@ -236,3 +273,6 @@ def load_bibtex(file_path: str | Path) -> None:
 
 def enrich_all() -> None:
     Registry.enrich_all()
+
+def load_plugins() -> None:
+    Registry.load_plugins()

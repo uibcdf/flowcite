@@ -6,6 +6,8 @@ This guide explains how to integrate **FlowCite** into a host library (e.g., `mo
 
 Every host library should have a `_flowcite.py` file in its main package directory to centralize FlowCite's configuration and handle it as an optional dependency.
 
+Since version 0.3.0, FlowCite supports **Auto-Discovery** and **Import Hooks**. We recommend enabling these in your centralization file if you want to automatically track third-party dependencies.
+
 ### Template for `_flowcite.py`:
 
 ```python
@@ -72,6 +74,22 @@ from ._flowcite import report
 
 def cite(format="markdown"):
     return report(format=format)
+```
+
+## 5. Advanced Features (since 0.3.0)
+
+### Auto-Discovery of Dependencies
+If your library uses external packages (like `numpy` or `mdtraj`) and you want FlowCite to track them automatically, add this to your initialization:
+```python
+if FLOWCITE_INSTALLED:
+    flowcite.enable_import_hooks()
+```
+
+### Session Persistence
+For long-running scientific workflows, you can ensure no citation is lost even if the script crashes:
+```python
+if FLOWCITE_INSTALLED:
+    flowcite.enable_persistence("flowcite_session.json")
 ```
 
 By following this pattern, the host library remains functional even if FlowCite is not installed, while providing full citation support for users who have it.
