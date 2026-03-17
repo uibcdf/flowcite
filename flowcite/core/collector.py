@@ -1,31 +1,95 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Dict, List, Set
 
+
+import json
+from pathlib import Path
 
 class Collector:
     # set of target names actually used
     used_targets: set[str] = set()
     # item_id -> list of targets that caused it
     used_items: dict[str, list[str]] = {}
+    
+    # Hierarchical tracking: target -> { 'items': set(), 'children': set() }
+    usage_tree: dict[str, dict[str, set[str]]] = {}
+
+    # Persistence
+    _persistence_path: Path | None = None
 
     @classmethod
-    def track_target(cls, target: str) -> None:
+    def enable_persistence(cls, path: str | Path) -> None:
+        cls._persistence_path = Path(path)
+        # Load existing if present
+        if cls._persistence_path.exists():
+            try:
+                data = json.loads(cls._persistence_path.read_text())
+                cls.used_targets.update(data.get("used_targets", []))
+                cls.used_items.update(data.get("used_items", {}))
+                # Conversion back to sets for usage_tree
+                for target, content in data.get("usage_tree", {}).items():
+                    cls.usage_tree[target] = {
+                        'items': set(content.get('items', [])),
+                        'children': set(content.get('children', []))
+                    }
+            except Exception:
+                pass
+
+    @classmethod
+    def _save_state(cls) -> None:
+        if cls._persistence_path:
+            # Convert sets to lists for JSON
+            tree_serializable = {}
+            for target, content in cls.usage_tree.items():
+                tree_serializable[target] = {
+                    'items': list(content['items']),
+                    'children': list(content['children'])
+                }
+            
+            data = {
+                "used_targets": list(cls.used_targets),
+                "used_items": cls.used_items,
+                "usage_tree": tree_serializable
+            }
+            cls._persistence_path.write_text(json.dumps(data, indent=2))
+
+    @classmethod
+    def track_target(cls, target: str, parent: str | None = None) -> None:
         cls.used_targets.add(target)
+        cls.usage_tree.setdefault(target, {'items': set(), 'children': set()})
+        if parent:
+            cls.usage_tree.setdefault(parent, {'items': set(), 'children': set()})
+            cls.usage_tree[parent]['children'].add(target)
+        cls._save_state()
 
     @classmethod
     def track_item(cls, item_id: str, used_by: str | None = None) -> None:
+        if used_by is None:
+            from .context import get_current_scope
+            used_by = get_current_scope()
+
         cls.used_items.setdefault(item_id, [])
-        if used_by is not None and used_by not in cls.used_items[item_id]:
-            cls.used_items[item_id].append(used_by)
+        if used_by is not None:
+            if used_by not in cls.used_items[item_id]:
+                cls.used_items[item_id].append(used_by)
+            
+            # Update usage tree
+            cls.usage_tree.setdefault(used_by, {'items': set(), 'children': set()})
+            cls.usage_tree[used_by]['items'].add(item_id)
+        cls._save_state()
 
     @classmethod
     def get_used_items(cls) -> dict[str, list[str]]:
         return cls.used_items.copy()
 
+    @classmethod
+    def get_usage_tree(cls) -> dict[str, dict[str, set[str]]]:
+        return cls.usage_tree
 
-def track_target(target: str) -> None:
-    Collector.track_target(target)
+
+def track_target(target: str, parent: str | None = None) -> None:
+    Collector.track_target(target, parent=parent)
 
 
 def track_item(item_id: str, used_by: str | None = None) -> None:
@@ -35,3 +99,5 @@ def track_item(item_id: str, used_by: str | None = None) -> None:
 def get_used_items() -> dict[str, list[str]]:
     return Collector.get_used_items()
 
+def get_usage_tree() -> dict[str, dict[str, set[str]]]:
+    return Collector.get_usage_tree()

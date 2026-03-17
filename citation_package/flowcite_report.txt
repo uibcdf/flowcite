@@ -1,0 +1,12 @@
+# Citation Provenance Graph
+
+├── main_workflow
+│   ├── data_loading
+│   │   └── (Cite: molsysmt:main)
+│   └── heavy_computation
+├── numpy
+│   └── (Cite: paper:numpy)
+└── plotting_workflow
+    ├── heavy_computation
+    └── initialization
+        └── (Cite: Points of view: Color blindness)

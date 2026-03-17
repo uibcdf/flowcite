@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from typing import TypedDict, Literal, Any
+import re
+import json
+import urllib.request
+from pathlib import Path
+from typing import TypedDict, Literal, Any, Dict, List
 
 
 class CitationItem(TypedDict, total=False):
@@ -13,6 +17,13 @@ class CitationItem(TypedDict, total=False):
     url: str
     note: str
     how_to_cite: str
+    # and any other bibtex field
+    journal: str
+    volume: str
+    number: str
+    pages: str
+    publisher: str
+    version: str
 
 
 class Registry:
@@ -25,9 +36,10 @@ class Registry:
 
     @classmethod
     def register_item(cls, **item: Any) -> None:
+        if "id" not in item:
+            raise ValueError("Item must have an 'id'")
         item_id = item["id"]
-        cls.items[item_id] = item  # overwrite allowed
-        # no return
+        cls.items[item_id] = item  # type: ignore
 
     @classmethod
     def bind(cls, target: str, items: list[str]) -> None:
@@ -43,6 +55,169 @@ class Registry:
             if it not in cls.injections[target_module]:
                 cls.injections[target_module].append(it)
 
+    @classmethod
+    def load_bibtex(cls, file_path: str | Path) -> None:
+        """
+        Load citation items from a BibTeX file.
+        Very lightweight parser inspired by bibtexparser but with zero dependencies.
+        """
+        path = Path(file_path)
+        if not path.exists():
+            raise FileNotFoundError(f"BibTeX file not found: {path}")
+        
+        content = path.read_text()
+        
+        # Regex to find entries: @type{key, ...}
+        # This matches @type{key, and then everything until the matching closing brace
+        # We use a simplified version that finds entry blocks
+        entry_pattern = re.compile(r'@(\w+)\s*\{\s*([^,]+)\s*,\s*(.*?)\n\s*\}', re.DOTALL)
+        
+        # For more complex entries with nested braces, we might need a more robust loop
+        # but for common scientific bibtex, this regex is a good start.
+        # Let's use a slightly more manual approach to be safe with nested braces.
+        
+        pos = 0
+        while True:
+            match = re.search(r'@(\w+)\s*\{', content[pos:])
+            if not match:
+                break
+            
+            entry_type = match.group(1).lower()
+            start_bracket = pos + match.end()
+            
+            # Find matching closing bracket
+            bracket_count = 1
+            end_pos = start_bracket
+            while bracket_count > 0 and end_pos < len(content):
+                if content[end_pos] == '{':
+                    bracket_count += 1
+                elif content[end_pos] == '}':
+                    bracket_count -= 1
+                end_pos += 1
+            
+            if bracket_count == 0:
+                entry_body = content[start_bracket:end_pos-1]
+                cls._parse_entry(entry_type, entry_body)
+            
+            pos = end_pos
+
+    @classmethod
+    def enrich_item(cls, item_id: str) -> None:
+        """
+        Fetch missing metadata for an item using its DOI from Crossref API.
+        """
+        item = cls.items.get(item_id)
+        if not item or "doi" not in item:
+            return
+
+        doi = item["doi"]
+        try:
+            url = f"https://api.crossref.org/works/{doi}"
+            # Identifying ourselves is good practice for Crossref API
+            headers = {"User-Agent": "FlowCite/0.1.0 (https://github.com/uibcdf/flowcite)"}
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=5) as response:
+                data = json.loads(response.read().decode())["message"]
+                
+                # Update title if missing
+                if "title" not in item or not item["title"]:
+                    item["title"] = data.get("title", [item_id])[0]
+                
+                # Update authors if missing
+                if "authors" not in item or not item["authors"]:
+                    authors = []
+                    for auth in data.get("author", []):
+                        given = auth.get("given", "")
+                        family = auth.get("family", "")
+                        authors.append(f"{family}, {given}".strip(", "))
+                    if authors:
+                        item["authors"] = authors
+                
+                # Update year if missing
+                if "year" not in item or not item["year"]:
+                    issued = data.get("issued", {}).get("date-parts", [[None]])[0][0]
+                    if issued:
+                        item["year"] = int(issued)
+                
+                # Update journal if missing
+                if "journal" not in item or not item["journal"]:
+                    container = data.get("container-title", [])
+                    if container:
+                        item["journal"] = container[0]
+
+        except Exception as e:
+            # We fail silently as enrichment is an optional enhancement
+            pass
+
+    @classmethod
+    def enrich_all(cls) -> None:
+        """Enrich all registered items that have a DOI."""
+        for item_id in list(cls.items.keys()):
+            cls.enrich_item(item_id)
+
+    @classmethod
+    def _parse_entry(cls, entry_type: str, body: str) -> None:
+        # First line is usually the ID/Key
+        lines = body.split(',', 1)
+        if not lines:
+            return
+        
+        item_id = lines[0].strip()
+        fields_str = lines[1] if len(lines) > 1 else ""
+        
+        # Normalize type
+        fc_type_map = {
+            "article": "article",
+            "software": "software",
+            "misc": "other",
+            "webpage": "web",
+            "online": "web",
+            "dataset": "dataset",
+            "repository": "repo"
+        }
+        fc_type = fc_type_map.get(entry_type, "other")
+        
+        item: Dict[str, Any] = {
+            "id": item_id,
+            "type": fc_type
+        }
+        
+        # Parse fields
+        # Regex for key = {value} or key = "value" or key = value
+        field_pattern = re.compile(r'(\w+)\s*=\s*(\{.*?\}|".*?"|[^,]+)', re.DOTALL)
+        
+        # We need to handle nested braces in values too if we want to be 100% robust,
+        # but for now let's use a simpler field extraction.
+        
+        for field_match in field_pattern.finditer(fields_str):
+            key = field_match.group(1).lower()
+            value = field_match.group(2).strip()
+            
+            # Remove enclosing braces or quotes
+            if (value.startswith('{') and value.endswith('}')) or (value.startswith('"') and value.endswith('"')):
+                value = value[1:-1]
+            
+            # Special handling for authors
+            if key == "author" or key == "authors":
+                # Split by ' and '
+                authors = [a.strip() for a in re.split(r'\s+and\s+', value, flags=re.IGNORECASE)]
+                item["authors"] = authors
+            elif key == "year":
+                try:
+                    item["year"] = int(value)
+                except ValueError:
+                    item["year"] = value
+            else:
+                # Direct mapping or standard keys
+                fc_key_map = {
+                    "journaltitle": "journal",
+                    "date": "year" # often contains more, but year is common
+                }
+                final_key = fc_key_map.get(key, key)
+                item[final_key] = value
+        
+        cls.register_item(**item)
+
 
 # convenience functions
 def register_item(**item: Any) -> None:
@@ -55,3 +230,9 @@ def bind(target: str, items: list[str]) -> None:
 
 def add_injection(target_module: str, items: list[str]) -> None:
     Registry.add_injection(target_module, items)
+
+def load_bibtex(file_path: str | Path) -> None:
+    Registry.load_bibtex(file_path)
+
+def enrich_all() -> None:
+    Registry.enrich_all()

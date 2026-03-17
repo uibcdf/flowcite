@@ -1,6 +1,6 @@
 ---
 title: FlowCite — Workflow-Aware Citation & Acknowledgement Library
-version: v0.2-draft
+version: 0.1.0
 authors: [UIBCDF Development Team]
 license: MIT
 ---

@@ -1,6 +1,6 @@
 [project]
 name = "flowcite"
-version = "0.0.1"
+version = "0.1.0"
 description = "FlowCite — trace what you used, cite what matters."
 readme = "README.md"
 authors = [
