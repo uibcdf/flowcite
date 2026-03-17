@@ -8,9 +8,9 @@ from .core.report import report
 def main():
     parser = argparse.ArgumentParser(description=\"FlowCite CLI - Inspect saved citation sessions.\")
     parser.add_argument(\"session_file\", help=\"Path to a saved session JSON file (from enable_persistence)\")
-    parser.add_argument(\"--format\", \"-f\", default=\"text\", 
-                        choices=[\"text\", \"markdown\", \"bibtex\", \"csl-json\", \"provenance\"],
-                        help=\"Output format (default: text)\")
+    parser.add_argument("--format", "-f", default="text", 
+                        choices=["text", "markdown", "bibtex", "csl-json", "provenance", "latex"],
+                        help="Output format (default: text)")
     
     args = parser.parse_args()
     
