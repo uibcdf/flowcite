@@ -87,6 +87,37 @@ class Collector:
     def get_usage_tree(cls) -> dict[str, dict[str, set[str]]]:
         return cls.usage_tree
 
+    @classmethod
+    def aggregate(cls, paths: list[str | Path]) -> None:
+        """
+        Merge multiple saved session files into the current collector state.
+        """
+        for path in paths:
+            path = Path(path)
+            if not path.exists():
+                continue
+            try:
+                data = json.loads(path.read_text())
+                cls.used_targets.update(data.get("used_targets", []))
+                
+                # Merge used_items
+                new_items = data.get("used_items", {})
+                for item_id, callers in new_items.items():
+                    cls.used_items.setdefault(item_id, [])
+                    for c in callers:
+                        if c not in cls.used_items[item_id]:
+                            cls.used_items[item_id].append(c)
+                
+                # Merge usage_tree
+                new_tree = data.get("usage_tree", {})
+                for target, content in new_tree.items():
+                    cls.usage_tree.setdefault(target, {'items': set(), 'children': set()})
+                    cls.usage_tree[target]['items'].update(content.get('items', []))
+                    cls.usage_tree[target]['children'].update(content.get('children', []))
+            except Exception:
+                continue
+        cls._save_state()
+
 
 def track_target(target: str, parent: str | None = None) -> None:
     Collector.track_target(target, parent=parent)

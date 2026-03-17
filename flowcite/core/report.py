@@ -10,7 +10,9 @@ from ..formats import markdown, text, bibtex, jsonfmt, csl_json, provenance, lat
 
 logger = logging.getLogger(__name__)
 
-def report(format: str = "markdown") -> str:
+from typing import Any
+
+def report(format: str = "markdown", **kwargs: Any) -> str:
     used = get_used_items()
     items = Registry.items
 
@@ -27,7 +29,7 @@ def report(format: str = "markdown") -> str:
     if format == "provenance":
         return provenance.render(used, items)
     if format == "latex":
-        return latex.render(used, items)
+        return latex.render(used, items, **kwargs)
     # default fallback
     return text.render(used, items)
 

@@ -17,7 +17,7 @@ def test_latex_generation():
     assert "\\begin{document}" in tex_str
     assert "\\end{document}" in tex_str
     assert "\\bibliographystyle{plainnat}" in tex_str
-    assert "\\bibliography{flowcite_bibliography}" in tex_str
+    assert "\\bibliography{flowcite_report}" in tex_str
     
     # Check item rendering (with escaped chars)
     assert "\\textbf{MolSysMT Paper \\& Stuff}" in tex_str

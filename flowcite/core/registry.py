@@ -121,18 +121,38 @@ class Registry:
             except Exception:
                 pass
         
-        # 2. Try network
+        # 2. Try network (Crossref first, then DataCite)
         if not data:
+            # 2a. Try Crossref
             try:
                 url = f"https://api.crossref.org/works/{doi}"
-                headers = {"User-Agent": "FlowCite/0.2.0 (https://github.com/uibcdf/flowcite)"}
+                headers = {"User-Agent": "FlowCite/0.4.0 (https://github.com/uibcdf/flowcite)"}
                 req = urllib.request.Request(url, headers=headers)
                 with urllib.request.urlopen(req, timeout=5) as response:
                     data = json.loads(response.read().decode())["message"]
-                    # Save to cache
-                    cache_file.write_text(json.dumps(data))
             except Exception:
-                pass
+                # 2b. Try DataCite
+                try:
+                    url = f"https://api.datacite.org/dois/{doi}"
+                    req = urllib.request.Request(url, headers=headers)
+                    with urllib.request.urlopen(req, timeout=5) as response:
+                        dc_data = json.loads(response.read().decode())["data"]["attributes"]
+                        # Map DataCite to a Crossref-like format for consistency in the rest of the function
+                        data = {
+                            "title": [dc_data.get("title")] if dc_data.get("title") else [t.get("title") for t in dc_data.get("titles", [])[:1]],
+                            "author": [{"family": a.get("familyName", a.get("name")), "given": a.get("givenName", "")} for a in dc_data.get("creators", [])],
+                            "issued": {"date-parts": [[dc_data.get("publicationYear")]]},
+                            "container-title": [dc_data.get("publisher", "")]
+                        }
+                except Exception:
+                    pass
+            
+            # Save to cache if we found something
+            if data:
+                try:
+                    cache_file.write_text(json.dumps(data))
+                except Exception:
+                    pass
 
         # 3. Apply metadata
         if data:

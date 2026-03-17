@@ -30,9 +30,9 @@ class CitationCallVisitor(ast.NodeVisitor):
         return None
 
 def inspect_function(func: Callable, targets: set[str]) -> set[str]:
-    \"\"\"
+    """
     Deeply inspect a function's source code to see if it calls any of the targets.
-    \"\"\"
+    """
     try:
         source = inspect.getsource(func)
         tree = ast.parse(source)
@@ -43,10 +43,10 @@ def inspect_function(func: Callable, targets: set[str]) -> set[str]:
         return set()
 
 def auto_track_calls(func: Callable, target_map: dict[str, str | list[str]]):
-    \"\"\"
+    """
     Decorator that inspects the decorated function and automatically tracks
     citations if certain external calls are detected in its source.
-    \"\"\"
+    """
     found = inspect_function(func, set(target_map.keys()))
     
     # This is a bit of a hybrid: we track if we FIND the call in the source.

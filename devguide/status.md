@@ -1,30 +1,21 @@
-# Current Project Status (Version 0.4.0)
+# Current Project Status (Version 0.5.0 - Feature Complete)
 
-This document reflects the technical reality of the 0.4.0 release.
+This document reflects the technical reality of the 0.5.0 release, which marks the "Feature Complete" milestone for the initial vision.
 
 ## What is working (DONE)
-- **Item Registry:** Data structure to define articles, repositories, etc.
-- **BibTeX Loader:** Robust internal parser for `.bib` files.
-- **Auto-Discovery:** Automatic detection of `CITATION.cff` and package metadata (PEP 621).
-- **Standard Injections:** Built-in citations for NumPy, SciPy, Matplotlib, and MolSysSuite.
-- **Plugin System:** Automatic loading of citation packs via entry points.
-- **Metadata Cache:** Local storage for DOI results in `~/.cache/flowcite`.
-- **DueCredit Bridge:** Interoperability with DueCredit.
-- **CLI Tool:** Command-line reporter `flowcite <session_file>`.
-- **Provenance Graph:** Hierarchical visualization of *why* each item was cited.
-- **CSL-JSON Export:** Standard format for Zotero/Mendeley integration.
-- **LaTeX/PDF Generator:** Directly generate and compile (`pdflatex`) citation documents.
-- **Deep API Inspection:** Automatic citation tracking via AST analysis (`auto_track_calls`).
-- **Collaborative Web UI:** Temporary local web dashboard via `serve_ui()`.
-- **Jupyter Integration:** Rich HTML representation via `flowcite.summary()`.
-- **Markdown Enrichment:** Clickable titles (DOI/URL) and formatted author lists.
-- **Import Hooks:** Automatic citation triggering on `import`.
-- **Auto-Reminder:** Optional `atexit` hook for end-of-session alerts.
-- **Persistence:** JSON-based session recovery.
-- **Combined Reporting:** `flowcite.dump()` for multi-format output.
-- **DOI Enrichment:** Automatic metadata fetching from Crossref.
+- **Hierarchical Core:** Registry, Collector, and Context Managers supporting nested scopes.
+- **Automated Discovery:** Intelligent tracking via Import Hooks, `CITATION.cff`, and PEP 621 metadata.
+- **Rich Metadata:** DOI Enrichment with support for both **Crossref** and **DataCite**, including local caching.
+- **Scientific Formats:** Markdown (rich), BibTeX (robust), CSL-JSON (Zotero), Provenance Tree (Traceability), and LaTeX.
+- **Professional UX:** Jupyter HTML summary, multi-format `dump()`, and automatic **PDF compilation**.
+- **Ecosystem Integration:** Plugin system (entry points), DueCredit bridge, and **Multi-session Aggregator** for HPC clusters.
+- **Reliability:** Session persistence and end-of-session auto-reminders.
+- **Developer Tools:** Command-line interface (CLI) for session inspection and merging.
 
-## Future Strategic Concepts (WIP/TODO for 1.0.0)
-- **Stable API:** Hardening the core for long-term support.
-- **Cloud Sync:** Aggregate reports from multiple users/machines.
-- **IDE Extensions:** Real-time citation hints in VSCode/PyCharm.
+## Work in Progress (WIP for 1.0.0)
+- **API Hardening:** Finalizing stable interfaces for long-term support.
+- **Documentation Suite:** Comprehensive tutorials and API reference.
+
+## Future Strategic Concepts
+- **Cloud Aggregator:** Web-based citation gathering.
+- **IDE Extensions:** Real-time citation hints.

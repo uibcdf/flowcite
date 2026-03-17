@@ -7,20 +7,24 @@
 
 ## Phase 2: Automation & Metadata (0.2.0) - [DONE]
 *   [x] Launch `flowcite.contrib.jupyter` for rich visualization.
-*   [x] Improve the Markdown format to include clickable DOI links.
 *   [x] Auto-discovery of `CITATION.cff` and package metadata.
-*   [x] Standard Injections (NumPy, SciPy, MolSysSuite).
-*   [x] CSL-JSON and Provenance Graph support.
 *   [x] DOI Enrichment (Crossref).
 *   [x] Session Persistence and Auto-reminders.
 
-## Phase 3: Ecosystem & Connectivity (0.3.0) - [IN PROGRESS]
-*   [ ] **Plugin System (Entry Points):** Allow external libraries to ship citation packs.
-*   [ ] **Metadata Cache:** Persistent storage for fetched DOI metadata to work offline.
-*   [ ] **DueCredit Bridge:** Export/Forward citations to DueCredit.
-*   [ ] **CLI Tool:** Command-line interface to inspect saved sessions.
+## Phase 3: Ecosystem & Connectivity (0.3.0) - [DONE]
+*   [x] **Plugin System (Entry Points):** Allow external libraries to ship citation packs.
+*   [x] **Metadata Cache:** Persistent storage for fetched DOI metadata.
+*   [x] **DueCredit Bridge:** Interoperability with DueCredit.
+*   [x] **CLI Tool:** Command-line reporter for stored sessions.
 
-## Future Strategic Concepts (Ideas & Proposals)
-1.  **Collaborative Web UI:** A temporary web server to view citations interactively.
-2.  **PDF/Latex Templates:** Direct generation of "References" sections.
-3.  **Deep API Inspection:** Detect algorithm usage via AST analysis (very advanced).
+## Phase 4: Full Feature Set (0.5.0) - [DONE]
+*   [x] **LaTeX/PDF Suite:** Compilable bibliographies and automatic PDF build.
+*   [x] **Multi-session Aggregator:** Merge JSON sessions from HPC/parallel runs.
+*   [x] **DataCite Support:** Track datasets and Zenodo software via DOI enrichment.
+*   [x] **Custom Styles:** Support for different bibliography styles in LaTeX.
+*   [x] **Deep API Inspection:** Detect algorithm usage via AST analysis (hybrid).
+
+## Towards Stable Release (1.0.0)
+1.  **API Hardening:** Finalize signatures and ensure backward compatibility.
+2.  **Exhaustive Testing:** Integration tests with all MolSysSuite tools.
+3.  **Comprehensive Docs:** Tutorials, use cases, and full API documentation.

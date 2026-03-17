@@ -14,6 +14,7 @@ from .core.hooks import enable_auto_reminder, enable_import_hooks
 from .contrib.duecredit_compat import export_to_duecredit
 
 enable_persistence = Collector.enable_persistence
+aggregate = Collector.aggregate
 
 # Automatically load citations from installed plugins
 load_plugins()
@@ -39,6 +40,7 @@ __all__ = [
     "enable_auto_reminder",
     "enable_import_hooks",
     "enable_persistence",
+    "aggregate",
     "export_to_duecredit",
 ]
 

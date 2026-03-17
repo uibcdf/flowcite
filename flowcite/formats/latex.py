@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-def render(used: dict[str, list[str]], items: dict[str, dict]) -> str:
+def render(used: dict[str, list[str]], items: dict[str, dict], style: str = "plainnat") -> str:
     """
     Render used items as a complete, compilable LaTeX document containing a bibliography.
     """
@@ -40,7 +40,7 @@ def render(used: dict[str, list[str]], items: dict[str, dict]) -> str:
     
     lines.extend([
         "",
-        "\\bibliographystyle{plainnat}",
+        f"\\bibliographystyle{{{style}}}",
         "\\bibliography{flowcite_report}",
         "",
         "\\end{document}",

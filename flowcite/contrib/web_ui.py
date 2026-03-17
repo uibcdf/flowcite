@@ -5,10 +5,10 @@ from ..core.collector import get_used_items
 from ..core.registry import Registry
 
 def serve_ui(port: int = 8080):
-    \"\"\"
+    """
     Start a temporary local web server to display citations.
     This is a conceptual stub for the 0.4.0 release.
-    \"\"\"
+    """
     try:
         from flask import Flask, render_template_string
     except ImportError:
@@ -23,7 +23,7 @@ def serve_ui(port: int = 8080):
         items = Registry.items
         
         # Simple HTML template
-        html = \"\"\"
+        html = """
         <html>
         <head><title>FlowCite Live Dashboard</title></head>
         <body style='font-family: sans-serif; padding: 20px;'>
@@ -41,7 +41,7 @@ def serve_ui(port: int = 8080):
             </table>
         </body>
         </html>
-        \"\"\"
+        """
         return render_template_string(html, used=used, items=items)
 
     print(f"Starting FlowCite UI at http://127.0.0.1:{port}")
