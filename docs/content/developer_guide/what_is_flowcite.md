@@ -1,18 +1,33 @@
-# What is FlowCite?
+# Vision and Concept: The FlowCite Bible
 
-**FlowCite** is a lightweight Python library designed to provide **runtime-aware citation and acknowledgement tracking**.
+## What is FlowCite?
+FlowCite is a runtime citation and acknowledgement tracking engine for scientific workflows in Python.
 
-## The Problem
-Scientific software often relies on multiple algorithms, datasets, and third-party libraries. However, typical citation practices are "all or nothing": if you import a library, you're often asked to cite its main paper, even if you only used a small, unrelated part of it. Conversely, many important contributions (like specific algorithms or datasets used conditionally) go uncredited.
+Unlike static citation lists (which tell you what to cite just by installing a library), FlowCite is **context-aware**: it only asks you to cite what you actually used during the execution of your code.
 
-## The Solution
-FlowCite allows developers to:
-1.  **Register items statically:** Define what *can* be cited (papers, repos, datasets).
-2.  **Bind them to code:** Associate these items with specific functions or classes.
-3.  **Track usage dynamically:** At runtime, FlowCite records only what was *actually* executed.
+## Why does it exist? (The Value)
+1.  **Fairness in Attribution:** It allows giving credit to specific algorithms, datasets, or sub-modules that would otherwise be hidden under the general name of a large library.
+2.  **Noise Reduction:** Users only receive a list of what is relevant to their current analysis.
+3.  **Automation:** Generates reports ready for publications (BibTeX) or notebooks (Markdown) without manual effort.
+4.  **Workflow Integration:** Designed to integrate seamlessly into a researcher's daily life, aiming for compatibility with modern reference managers (like Zotero via CSL-JSON) and providing absolute transparency on *why* something is cited.
 
-## Core Philosophy
-*   **Minimal Overhead:** Tracking should not significantly impact performance.
-*   **Optional Dependency:** A host library should work perfectly even if FlowCite is not installed.
-*   **Aesthetic & Flexible:** Reports should look great in Jupyter Notebooks and be exportable to standard formats like BibTeX or JSON.
-*   **Interoperable:** Respect and complement existing tools like `duecredit`.
+## Ecosystem: MolSysSuite
+FlowCite is a core support library within the **MolSysSuite** ecosystem. It sits hierarchically alongside other specialized support tools:
+*   `argdigest` (Argument validation)
+*   `depdigest` (Dependency management)
+*   `smonitor` (Session monitoring)
+*   `pyunitwizard` (Unit conversion)
+
+All these libraries, including FlowCite, share a common purpose: providing robust infrastructure for scientific host libraries like `molsysmt`. 
+
+### Integration Pattern
+Following the suite's standard, host libraries should centralize FlowCite usage through a `_flowcite.py` file. This ensures:
+1.  **Optionality:** The host library functions even without FlowCite.
+2.  **Centralization:** All citation registration and tracking logic are easy to find and maintain.
+3.  **Consistency:** Users across the ecosystem find familiar patterns in every library.
+
+## Design Pillars
+*   **Invisible and Optional:** If FlowCite is not installed, the host library must continue to function without changes.
+*   **Zero Core Dependencies:** The FlowCite core must be pure Python to facilitate its inclusion in any environment.
+*   **Extensible:** Anyone can add new output formats or injections for third-party libraries.
+

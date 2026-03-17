@@ -1,19 +1,18 @@
 # Developer Guide
 
-Welcome to the FlowCite developer documentation. This guide is designed to help you understand the project's vision, architecture, and contribution process.
+Welcome to the FlowCite developer documentation. This section contains the "Bible" of the project, serving as the single source of truth for its vision, technical decisions, and roadmap.
 
 ## Essential Reading
-1.  **[What is FlowCite?](what_is_flowcite.md):** Core concepts and mission.
-2.  **[Architecture](architecture.md):** How the pieces fit together.
-3.  **[Onboarding](onboarding.md):** Setting up your environment and workflow.
+1.  **[Vision and Concept](what_is_flowcite.md):** What is FlowCite? What is its differential value?
+2.  **[Project Status](status.md):** What is already working and what is next?
+3.  **[Roadmap](roadmap.md):** Where are we going and what are the next milestones?
 
-## Strategic Context
-*   **[Roadmap & Future Directions](roadmap.md):** Where we are going.
-*   **[Pending Decisions](decisions.md):** Open technical questions.
+## Standards and Workflow
+*   **[Technical Decision Log](decisions.md):** Why were things done this way?
+*   **[Workflow and Standards](contributing.md):** How to contribute, code standards, and validation.
 
 ## Deep Dives
 *   [Registry & Collector](registry_and_collector.md)
 *   [Decorators](decorators.md)
 *   [Format Renderers](formats.md)
 *   [Interoperability](interoperability.md)
-*   [Contributing](contributing.md)

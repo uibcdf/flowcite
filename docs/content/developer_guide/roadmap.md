@@ -1,27 +1,30 @@
-# Roadmap & Future Directions
+# Roadmap
 
-This document outlines where FlowCite is heading and the milestones we aim to achieve.
+## Phase 1: Core Consolidation (0.1.0) - [DONE]
+*   [x] Refactor the BibTeX generator to be robust.
+*   [x] Implement the documented and tested 'Optional Dependency' pattern.
+*   [x] Add the Context Manager for granular tracking.
 
-## Vision
-To become the standard "citation engine" for the Python scientific ecosystem, making attribution effortless for both developers and users.
+## Phase 2: Automation & Metadata (0.2.0) - [DONE]
+*   [x] Launch `flowcite.contrib.jupyter` for rich visualization.
+*   [x] Auto-discovery of `CITATION.cff` and package metadata.
+*   [x] DOI Enrichment (Crossref).
+*   [x] Session Persistence and Auto-reminders.
 
-## Milestones
+## Phase 3: Ecosystem & Connectivity (0.3.0) - [DONE]
+*   [x] **Plugin System (Entry Points):** Allow external libraries to ship citation packs.
+*   [x] **Metadata Cache:** Persistent storage for fetched DOI metadata.
+*   [x] **DueCredit Bridge:** Interoperability with DueCredit.
+*   [x] **CLI Tool:** Command-line reporter for stored sessions.
 
-### v0.2 (Current Phase) - Core Refinement
-- [ ] **Robust BibTeX Generation:** Move beyond the current stub to a full-featured BibTeX renderer.
-- [ ] **Import Hooks (Injections):** Implement automatic tracking of 3rd-party libraries via import hooks.
-- [ ] **Optional Dependency Pattern:** Formalize and document the recommended way for libraries to include FlowCite as an optional dependency.
+## Phase 4: Full Feature Set (0.5.0) - [DONE]
+*   [x] **LaTeX/PDF Suite:** Compilable bibliographies and automatic PDF build.
+*   [x] **Multi-session Aggregator:** Merge JSON sessions from HPC/parallel runs.
+*   [x] **DataCite Support:** Track datasets and Zenodo software via DOI enrichment.
+*   [x] **Custom Styles:** Support for different bibliography styles in LaTeX.
+*   [x] **Deep API Inspection:** Detect algorithm usage via AST analysis (hybrid).
 
-### v0.3 - UX & Ecosystem
-- [ ] **Jupyter/IPython Integration:** Rich HTML representation of reports in notebooks.
-- [ ] **JSON Schema:** Define a formal schema for FlowCite data to allow for external tool integration.
-- [ ] **DueCredit Bridge:** An exporter that feeds FlowCite data into `duecredit`'s reporting engine.
-
-### v0.4 - Automation & Discovery
-- [ ] **Plugin System:** Allow external libraries to ship their own FlowCite "citation packs" that are discovered automatically.
-- [ ] **CLI Tool:** A command-line interface to inspect or aggregate reports from multiple runs.
-
-### v1.0 - Stability & Community
-- [ ] **Stable API:** Lock down the core API for long-term support.
-- [ ] **Comprehensive Documentation:** Full API reference and tutorial suite.
-- [ ] **Community Adoption:** Getting FlowCite integrated into major UIBCDF tools (TopoMT, MolSysMT).
+## Towards Stable Release (1.0.0)
+1.  **API Hardening:** Finalize signatures and ensure backward compatibility.
+2.  **Exhaustive Testing:** Integration tests with all MolSysSuite tools.
+3.  **Comprehensive Docs:** Tutorials, use cases, and full API documentation.
